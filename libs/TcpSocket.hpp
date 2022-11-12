@@ -10,6 +10,8 @@
 #include <arpa/inet.h>
 #include <mutex>
 #include <fcntl.h>
+#include <string.h>
+#include <errno.h>
 
 #define ERROR -1
 #define INVALID_SOCKET -1

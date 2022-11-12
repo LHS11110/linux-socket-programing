@@ -22,18 +22,21 @@ Address::Address(const char *ip, int port)
         break;
 
     default:
+        break;
     }
+    addr.sin_port = htons(port);
+    addr.sin_family = AF_INET;
 }
 
 void TCP::error(const char *msg)
 {
-    printf("%s\n", msg);
+    printf("%s: #%d\n", msg, errno);
     exit(-1);
 }
 
 void TCP::warning(const char *msg)
 {
-    printf("%s\n", msg);
+    printf("%s: #%d\n", msg, errno);
 }
 
 TCP::TCP()
