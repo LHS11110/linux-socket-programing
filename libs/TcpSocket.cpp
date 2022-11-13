@@ -28,6 +28,11 @@ Address::Address(const char *ip, int port)
     addr.sin_family = AF_INET;
 }
 
+Address &Address::operator=(const Address &__o)
+{
+    memcpy(this, &__o, sizeof(Address));
+}
+
 void TCP::error(const char *msg)
 {
     printf("%s: #%d\n", msg, errno);
