@@ -26,6 +26,8 @@ public:
     Address();
     Address(const char *ip, int port);
 
+    Address &operator=(const Address &);
+
     friend class TCP;
 };
 
