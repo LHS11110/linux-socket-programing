@@ -8,7 +8,6 @@
 #include <netinet/in.h>
 #include <string>
 #include <arpa/inet.h>
-#include <mutex>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
@@ -40,7 +39,6 @@ private:
 protected:
     int sock_fd, backlog;
     Address addr_info;
-    std::mutex tcp_mutex;
 
 public:
     TCP();
