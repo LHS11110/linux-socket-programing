@@ -30,7 +30,7 @@ Address::Address(const char *ip, int port)
 
 Address &Address::operator=(const Address &__o)
 {
-    memcpy(this, &__o, sizeof(Address));
+    return *(Address *)(memcpy(this, &__o, sizeof(Address)));
 }
 
 void TCP::error(const char *msg)
