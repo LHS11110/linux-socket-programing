@@ -81,6 +81,8 @@ void TCP::operator>>(const Address &addr)
 
 void TCP::operator>>(TCP &__o)
 {
+    if (__o.sock_fd != INVALID_SOCKET)
+        close(__o.sock_fd);
     __o.sock_fd = accept(sock_fd, (sockaddr *)&__o.addr_info.addr, &__o.addr_info.sock_len);
 }
 
