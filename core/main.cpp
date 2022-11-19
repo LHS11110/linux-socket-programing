@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unordered_map>
 #include "../libs/env.hpp"
 #include "../libs/TcpSocket.hpp"
 using namespace std;
@@ -13,18 +14,30 @@ int stringToInteger(const char *str)
     return int32;
 }
 
+class match_making
+{
+public:
+    unordered_map<string, function<void(vector<string>)>> map;
+    unordered_map<string, string> info;
+
+public:
+    void operator()(TCP& listener)
+    {
+        
+    }
+};
+
 int main(void)
 {
     ENV env;
     TCP listener;
     listener << Address(env["IP"], stringToInteger(env["PORT"]));
-
-    TCP client;
-    listener >> client;
-    string str;
-    str.resize(4096);
-    client.write(&str[0], client.read(&str[0], str.length()));
-    client.close_socket();
+    match_making logic;
+    logic.map["set"] = [&logic](vector<string> vec) -> void
+    {
+        logic.info[vec[0]] = vec[1];
+    };
+    logic(listener);
     listener.close_socket();
 
     return 0;
