@@ -57,7 +57,12 @@ TCP::TCP(const TCP &__o)
 TCP &TCP::operator=(const TCP &__o)
 {
     if (sock_fd != -1)
+#ifdef __linux__
         close(sock_fd);
+#endif
+#ifdef _WIN32
+        closesocket(sock_fd);
+#endif
     sock_fd = __o.sock_fd;
     addr_info = __o.addr_info;
     backlog = __o.backlog;
@@ -82,14 +87,24 @@ void TCP::operator>>(const Address &addr)
 void TCP::operator>>(TCP &__o)
 {
     if (__o.sock_fd != INVALID_SOCKET)
-        close(__o.sock_fd);
+#ifdef __linux__
+        close(sock_fd);
+#endif
+#ifdef _WIN32
+        closesocket(sock_fd);
+#endif
     __o.sock_fd = accept(sock_fd, (sockaddr *)&__o.addr_info.addr, &__o.addr_info.sock_len);
 }
 
 void TCP::allocate_socket()
 {
     if (sock_fd != INVALID_SOCKET)
+#ifdef __linux__
         close(sock_fd);
+#endif
+#ifdef _WIN32
+        closesocket(sock_fd);
+#endif
     sock_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 }
 
@@ -97,7 +112,12 @@ void TCP::close_socket()
 {
     if (sock_fd == INVALID_SOCKET)
         return;
-    close(sock_fd);
+#ifdef __linux__
+        close(sock_fd);
+#endif
+#ifdef _WIN32
+        closesocket(sock_fd);
+#endif
     sock_fd = INVALID_SOCKET;
 }
 
@@ -122,21 +142,49 @@ void TCP::sd_both()
     shutdown(sock_fd, SHUT_RDWR);
 }
 
-int TCP::setopt(int sockfd, int level, int opt_name, const void *optval, socklen_t optlen)
+#ifdef __linux__
+int TCP::getopt(int level, int opt_name, void *optval, socklen_t *optlen)
 {
-    return setsockopt(sockfd, level, opt_name, optval, optlen);
+    return getsockopt(sock_fd, level, opt_name, optval, optlen);
 }
 
-int TCP::getopt(int sockfd, int level, int opt_name, void *optval, socklen_t *optlen)
+int TCP::setopt(int level, int opt_name, const void *optval, socklen_t optlen)
 {
-    return getsockopt(sockfd, level, opt_name, optval, optlen);
+    return setsockopt(sock_fd, level, opt_name, optval, optlen);
 }
+#endif
+
+#ifdef _WIN32
+int TCP::getopt(int level, int opt_name, char *optval, socklen_t *optlen)
+{
+    return getsockopt(sock_fd, level, opt_name, optval, optlen);
+}
+
+int TCP::setopt(int level, int opt_name, const char *optval, socklen_t optlen)
+{
+    return setsockopt(sock_fd, level, opt_name, optval, optlen);
+}
+
+void TCP::blocking()
+{
+    u_long blockingMode = 0;
+    if (ioctlsocket(sock_fd, FIONBIO, &blockingMode) == SOCKET_ERROR)
+        error("Blocking Error");
+}
+#endif
 
 void TCP::non_blocking()
 {
+#ifdef __linux__
     int flag = fcntl(sock_fd, F_GETFL, 0);
     if (fcntl(sock_fd, F_SETFL, flag | O_NONBLOCK) == -1)
         warning("Non Blocking Error");
+#endif
+#ifdef _WIN32
+    u_long nonBlockingMode = 1;
+    if (ioctlsocket(sock_fd, FIONBIO, &nonBlockingMode) == SOCKET_ERROR)
+        error("Non Blocking Error");
+#endif
 }
 
 int TCP::write(const char *msg, size_t msg_len)

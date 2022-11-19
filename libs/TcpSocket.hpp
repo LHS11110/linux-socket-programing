@@ -1,6 +1,7 @@
 #ifndef _TCPSOCKET_H_
 #define _TCPSOCKET_H_
 
+#ifdef __linux__
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -11,6 +12,21 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#endif
+#ifdef _WIN32
+#define ERROR -1
+#pragma comment(lib, "ws2_32")
+#include <stdio.h>
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <WinSock2.h>
+#include <ws2tcpip.h>
+#define SHUT_RD SD_RECEIVE
+#define SHUT_WR SD_SEND
+#define SHUT_RDWR SD_BOTH
+#define socklen_t int
+#endif
 
 #define ERROR -1
 #define INVALID_SOCKET -1
@@ -37,8 +53,15 @@ private:
     static void warning(const char *msg);
 
 protected:
+#ifdef __linux__
     int sock_fd, backlog;
     Address addr_info;
+#endif
+#ifdef _WIN32
+    SOCKET sock_fd;
+    int backlog;
+    Address addr_info;
+#endif
 
 public:
     TCP();
@@ -54,8 +77,15 @@ public:
     void sd_read();
     void sd_write();
     void sd_both();
-    int setopt(int sockfd, int level, int opt_name, const void *optval, socklen_t optlen);
-    int getopt(int sockfd, int level, int opt_name, void *optval, socklen_t *optlen);
+#ifdef __linux__
+    int getopt(int level, int opt_name, void *optval, socklen_t *optlen);
+    int setopt(int level, int opt_name, const void *optval, socklen_t optlen);
+#endif
+#ifdef _WIN32
+    int getopt(int level, int opt_name, char *optval, socklen_t *optlen);
+    int setopt(int lever, int opt_name, const char *optval, socklen_t optlen);
+    void blocking();
+#endif
     void non_blocking();
     int write(const char *msg, size_t msg_len);
     int read(char *buff, size_t buff_len);
