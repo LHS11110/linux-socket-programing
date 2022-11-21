@@ -62,11 +62,12 @@ TCP::TCP(const TCP &__o)
 
 TCP &TCP::operator=(const TCP &__o)
 {
-    if (sock_fd != -1)
 #ifdef __linux__
+    if (sock_fd != INVALID_SOCKET)
         close(sock_fd);
 #endif
 #ifdef _WIN32
+    if (sock_fd != INVALID_SOCKET)
         closesocket(sock_fd);
 #endif
     sock_fd = __o.sock_fd;
@@ -78,51 +79,53 @@ TCP &TCP::operator=(const TCP &__o)
 void TCP::operator<<(const Address &addr)
 {
     addr_info = addr;
-    if (bind(sock_fd, (sockaddr *)&addr_info.addr, addr_info.sock_len) == ERROR)
+    if (bind(sock_fd, (sockaddr *)&addr_info.addr, addr_info.sock_len) == ERR)
         error("Bind Error");
-    if (listen(sock_fd, backlog) == ERROR)
+    if (listen(sock_fd, backlog) == ERR)
         error("Listen Error");
 }
 
 void TCP::operator>>(const Address &addr)
 {
     addr_info = addr;
-    if (connect(sock_fd, (sockaddr *)&addr_info.addr, addr_info.sock_len) == ERROR)
+    if (connect(sock_fd, (sockaddr *)&addr_info.addr, addr_info.sock_len) == ERR)
         warning("Connect Error");
 }
 
 void TCP::operator>>(TCP &__o)
 {
-    if (__o.sock_fd != INVALID_SOCKET)
 #ifdef __linux__
+    if (__o.sock_fd != INVALID_SOCKET)
         close(sock_fd);
 #endif
 #ifdef _WIN32
-        closesocket(sock_fd);
+    if (__o.sock_fd != INVALID_SOCKET)
+        closesocket(__o.sock_fd);
 #endif
     __o.sock_fd = accept(sock_fd, (sockaddr *)&__o.addr_info.addr, &__o.addr_info.sock_len);
 }
 
 void TCP::allocate_socket()
 {
-    if (sock_fd != INVALID_SOCKET)
 #ifdef __linux__
-        close(sock_fd);
+    if (sock_fd != INVALID_SOCKET)
+        return;
 #endif
 #ifdef _WIN32
-        closesocket(sock_fd);
+    if (sock_fd != INVALID_SOCKET)
+        return;
 #endif
     sock_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 }
 
 void TCP::close_socket()
 {
-    if (sock_fd == INVALID_SOCKET)
-        return;
 #ifdef __linux__
+    if (sock_fd != INVALID_SOCKET)
         close(sock_fd);
 #endif
 #ifdef _WIN32
+    if (sock_fd != INVALID_SOCKET)
         closesocket(sock_fd);
 #endif
     sock_fd = INVALID_SOCKET;
@@ -194,6 +197,7 @@ void TCP::non_blocking()
 #endif
 }
 
+#ifdef __linux__
 int TCP::write(const char *msg, size_t msg_len)
 {
     return send(sock_fd, msg, msg_len, 0);
@@ -203,3 +207,16 @@ int TCP::read(char *buff, size_t buff_len)
 {
     return recv(sock_fd, buff, buff_len, 0);
 }
+#endif
+
+#ifdef _WIN32
+int TCP::write(const char *msg, int msg_len)
+{
+    return send(sock_fd, msg, msg_len, 0);
+}
+
+int TCP::read(char *buff, int buff_len)
+{
+    return recv(sock_fd, buff, buff_len, 0);
+}
+#endif

@@ -12,9 +12,9 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#define INVALID_SOCKET -1
 #endif
 #ifdef _WIN32
-#define ERROR -1
 #pragma comment(lib, "ws2_32")
 #include <stdio.h>
 #include <iostream>
@@ -28,8 +28,7 @@
 #define socklen_t int
 #endif
 
-#define ERROR -1
-#define INVALID_SOCKET -1
+#define ERR -1
 
 class Address
 {
@@ -80,15 +79,17 @@ public:
 #ifdef __linux__
     int getopt(int level, int opt_name, void *optval, socklen_t *optlen);
     int setopt(int level, int opt_name, const void *optval, socklen_t optlen);
+    int write(const char *msg, size_t msg_len);
+    int read(char *buff, size_t buff_len);
 #endif
 #ifdef _WIN32
     int getopt(int level, int opt_name, char *optval, socklen_t *optlen);
     int setopt(int lever, int opt_name, const char *optval, socklen_t optlen);
     void blocking();
+    int write(const char *msg, int msg_len);
+    int read(char *buff, int buff_len);
 #endif
     void non_blocking();
-    int write(const char *msg, size_t msg_len);
-    int read(char *buff, size_t buff_len);
 
     friend class Address;
 };
