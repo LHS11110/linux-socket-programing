@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#define INVALID_SOCKET -1
 #endif
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32")
