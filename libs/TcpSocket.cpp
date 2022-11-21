@@ -53,11 +53,8 @@ TCP::TCP()
 }
 
 TCP::TCP(const TCP &__o)
-    : sock_fd(__o.sock_fd), addr_info(__o.addr_info), backlog(0)
+    : sock_fd(__o.sock_fd), addr_info(__o.addr_info), backlog(__o.backlog)
 {
-#ifdef _WIN32
-    blocking();
-#endif
 }
 
 TCP &TCP::operator=(const TCP &__o)
@@ -96,7 +93,7 @@ void TCP::operator>>(TCP &__o)
 {
 #ifdef _Unix
     if (__o.sock_fd != INVALID_SOCKET)
-        close(sock_fd);
+        close(__o.sock_fd);
 #endif
 #ifdef _Window
     if (__o.sock_fd != INVALID_SOCKET)
@@ -107,14 +104,8 @@ void TCP::operator>>(TCP &__o)
 
 void TCP::allocate_socket()
 {
-#ifdef _Unix
     if (sock_fd != INVALID_SOCKET)
         return;
-#endif
-#ifdef _Window
-    if (sock_fd != INVALID_SOCKET)
-        return;
-#endif
     sock_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 }
 
@@ -179,7 +170,7 @@ void TCP::blocking()
 {
     u_long blockingMode = 0;
     if (ioctlsocket(sock_fd, FIONBIO, &blockingMode) == SOCKET_ERROR)
-        error("Blocking Error");
+        warning("Blocking Error");
 }
 #endif
 
@@ -193,7 +184,7 @@ void TCP::non_blocking()
 #ifdef _Window
     u_long nonBlockingMode = 1;
     if (ioctlsocket(sock_fd, FIONBIO, &nonBlockingMode) == SOCKET_ERROR)
-        error("Non Blocking Error");
+        warning("Non Blocking Error");
 #endif
 }
 
