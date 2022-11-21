@@ -64,14 +64,13 @@ private:
 
 protected:
 #ifdef _Unix
-    int sock_fd, backlog;
-    Address addr_info;
+    int sock_fd;
 #endif
 #ifdef _Window
     SOCKET sock_fd;
+#endif
     int backlog;
     Address addr_info;
-#endif
 
 public:
     TCP();
