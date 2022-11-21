@@ -72,6 +72,7 @@ TCP &TCP::operator=(const TCP &__o)
     sock_fd = __o.sock_fd;
     addr_info = __o.addr_info;
     backlog = __o.backlog;
+    return *this;
 }
 
 void TCP::operator<<(const Address &addr)
