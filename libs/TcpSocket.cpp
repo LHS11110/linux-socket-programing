@@ -62,7 +62,7 @@ TCP::TCP(const TCP &__o)
 
 TCP &TCP::operator=(const TCP &__o)
 {
-#ifdef _Linux
+#ifdef _Unix
     if (sock_fd != INVALID_SOCKET)
         close(sock_fd);
 #endif
@@ -94,7 +94,7 @@ void TCP::operator>>(const Address &addr)
 
 void TCP::operator>>(TCP &__o)
 {
-#ifdef _Linux
+#ifdef _Unix
     if (__o.sock_fd != INVALID_SOCKET)
         close(sock_fd);
 #endif
@@ -107,7 +107,7 @@ void TCP::operator>>(TCP &__o)
 
 void TCP::allocate_socket()
 {
-#ifdef _Linux
+#ifdef _Unix
     if (sock_fd != INVALID_SOCKET)
         return;
 #endif
@@ -120,7 +120,7 @@ void TCP::allocate_socket()
 
 void TCP::close_socket()
 {
-#ifdef _Linux
+#ifdef _Unix
     if (sock_fd != INVALID_SOCKET)
         close(sock_fd);
 #endif
@@ -152,7 +152,7 @@ void TCP::sd_both()
     shutdown(sock_fd, SHUT_RDWR);
 }
 
-#ifdef _Linux
+#ifdef _Unix
 int TCP::getopt(int level, int opt_name, void *optval, socklen_t *optlen)
 {
     return getsockopt(sock_fd, level, opt_name, optval, optlen);
@@ -185,7 +185,7 @@ void TCP::blocking()
 
 void TCP::non_blocking()
 {
-#ifdef _Linux
+#ifdef _Unix
     int flag = fcntl(sock_fd, F_GETFL, 0);
     if (fcntl(sock_fd, F_SETFL, flag | O_NONBLOCK) == -1)
         warning("Non Blocking Error");
@@ -197,7 +197,7 @@ void TCP::non_blocking()
 #endif
 }
 
-#ifdef _Linux
+#ifdef _Unix
 int TCP::write(const char *msg, size_t msg_len)
 {
     return send(sock_fd, msg, msg_len, 0);

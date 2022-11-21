@@ -2,13 +2,16 @@
 #define _TCPSOCKET_H_
 
 #ifdef __APPLE__
-#define _Linux
+#define _Unix
 #endif
 #ifdef __linux__
-#define _Linux
+#define _Unix
+#endif
+#ifdef unix
+#define _Unix
 #endif
 
-#ifdef _Linux
+#ifdef _Unix
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -19,7 +22,6 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
-#define _Linux
 #endif
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32")
@@ -60,7 +62,7 @@ private:
     static void warning(const char *msg);
 
 protected:
-#ifdef _Linux
+#ifdef _Unix
     int sock_fd, backlog;
     Address addr_info;
 #endif
@@ -84,7 +86,7 @@ public:
     void sd_read();
     void sd_write();
     void sd_both();
-#ifdef _Linux
+#ifdef _Unix
     int getopt(int level, int opt_name, void *optval, socklen_t *optlen);
     int setopt(int level, int opt_name, const void *optval, socklen_t optlen);
     int write(const char *msg, size_t msg_len);
