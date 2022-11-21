@@ -96,7 +96,7 @@ void TCP::operator>>(TCP &__o)
 {
 #ifdef _Unix
     if (__o.sock_fd != INVALID_SOCKET)
-        close(sock_fd);
+        close(__o.sock_fd);
 #endif
 #ifdef _Window
     if (__o.sock_fd != INVALID_SOCKET)
