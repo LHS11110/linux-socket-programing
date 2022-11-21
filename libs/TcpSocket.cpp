@@ -47,57 +47,87 @@ void TCP::warning(const char *msg)
 TCP::TCP()
     : sock_fd(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)), addr_info(Address()), backlog(0)
 {
+#ifdef _WIN32
+    blocking();
+#endif
 }
 
 TCP::TCP(const TCP &__o)
     : sock_fd(__o.sock_fd), addr_info(__o.addr_info), backlog(0)
 {
+#ifdef _WIN32
+    blocking();
+#endif
 }
 
 TCP &TCP::operator=(const TCP &__o)
 {
-    if (sock_fd != -1)
+#ifdef _Unix
+    if (sock_fd != INVALID_SOCKET)
         close(sock_fd);
+#endif
+#ifdef _Window
+    if (sock_fd != INVALID_SOCKET)
+        closesocket(sock_fd);
+#endif
     sock_fd = __o.sock_fd;
     addr_info = __o.addr_info;
     backlog = __o.backlog;
+    return *this;
 }
 
 void TCP::operator<<(const Address &addr)
 {
     addr_info = addr;
-    if (bind(sock_fd, (sockaddr *)&addr_info.addr, addr_info.sock_len) == ERROR)
+    if (bind(sock_fd, (sockaddr *)&addr_info.addr, addr_info.sock_len) == ERR)
         error("Bind Error");
-    if (listen(sock_fd, backlog) == ERROR)
+    if (listen(sock_fd, backlog) == ERR)
         error("Listen Error");
 }
 
 void TCP::operator>>(const Address &addr)
 {
     addr_info = addr;
-    if (connect(sock_fd, (sockaddr *)&addr_info.addr, addr_info.sock_len) == ERROR)
+    if (connect(sock_fd, (sockaddr *)&addr_info.addr, addr_info.sock_len) == ERR)
         warning("Connect Error");
 }
 
 void TCP::operator>>(TCP &__o)
 {
+#ifdef _Unix
     if (__o.sock_fd != INVALID_SOCKET)
-        close(__o.sock_fd);
+        close(sock_fd);
+#endif
+#ifdef _Window
+    if (__o.sock_fd != INVALID_SOCKET)
+        closesocket(__o.sock_fd);
+#endif
     __o.sock_fd = accept(sock_fd, (sockaddr *)&__o.addr_info.addr, &__o.addr_info.sock_len);
 }
 
 void TCP::allocate_socket()
 {
+#ifdef _Unix
     if (sock_fd != INVALID_SOCKET)
-        close(sock_fd);
+        return;
+#endif
+#ifdef _Window
+    if (sock_fd != INVALID_SOCKET)
+        return;
+#endif
     sock_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 }
 
 void TCP::close_socket()
 {
-    if (sock_fd == INVALID_SOCKET)
-        return;
-    close(sock_fd);
+#ifdef _Unix
+    if (sock_fd != INVALID_SOCKET)
+        close(sock_fd);
+#endif
+#ifdef _Window
+    if (sock_fd != INVALID_SOCKET)
+        closesocket(sock_fd);
+#endif
     sock_fd = INVALID_SOCKET;
 }
 
@@ -122,23 +152,52 @@ void TCP::sd_both()
     shutdown(sock_fd, SHUT_RDWR);
 }
 
-int TCP::setopt(int sockfd, int level, int opt_name, const void *optval, socklen_t optlen)
+#ifdef _Unix
+int TCP::getopt(int level, int opt_name, void *optval, socklen_t *optlen)
 {
-    return setsockopt(sockfd, level, opt_name, optval, optlen);
+    return getsockopt(sock_fd, level, opt_name, optval, optlen);
 }
 
-int TCP::getopt(int sockfd, int level, int opt_name, void *optval, socklen_t *optlen)
+int TCP::setopt(int level, int opt_name, const void *optval, socklen_t optlen)
 {
-    return getsockopt(sockfd, level, opt_name, optval, optlen);
+    return setsockopt(sock_fd, level, opt_name, optval, optlen);
 }
+#endif
+
+#ifdef _Window
+int TCP::getopt(int level, int opt_name, char *optval, socklen_t *optlen)
+{
+    return getsockopt(sock_fd, level, opt_name, optval, optlen);
+}
+
+int TCP::setopt(int level, int opt_name, const char *optval, socklen_t optlen)
+{
+    return setsockopt(sock_fd, level, opt_name, optval, optlen);
+}
+
+void TCP::blocking()
+{
+    u_long blockingMode = 0;
+    if (ioctlsocket(sock_fd, FIONBIO, &blockingMode) == SOCKET_ERROR)
+        error("Blocking Error");
+}
+#endif
 
 void TCP::non_blocking()
 {
+#ifdef _Unix
     int flag = fcntl(sock_fd, F_GETFL, 0);
     if (fcntl(sock_fd, F_SETFL, flag | O_NONBLOCK) == -1)
         warning("Non Blocking Error");
+#endif
+#ifdef _Window
+    u_long nonBlockingMode = 1;
+    if (ioctlsocket(sock_fd, FIONBIO, &nonBlockingMode) == SOCKET_ERROR)
+        error("Non Blocking Error");
+#endif
 }
 
+#ifdef _Unix
 int TCP::write(const char *msg, size_t msg_len)
 {
     return send(sock_fd, msg, msg_len, 0);
@@ -148,3 +207,16 @@ int TCP::read(char *buff, size_t buff_len)
 {
     return recv(sock_fd, buff, buff_len, 0);
 }
+#endif
+
+#ifdef _Window
+int TCP::write(const char *msg, int msg_len)
+{
+    return send(sock_fd, msg, msg_len, 0);
+}
+
+int TCP::read(char *buff, int buff_len)
+{
+    return recv(sock_fd, buff, buff_len, 0);
+}
+#endif
