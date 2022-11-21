@@ -47,11 +47,17 @@ void TCP::warning(const char *msg)
 TCP::TCP()
     : sock_fd(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)), addr_info(Address()), backlog(0)
 {
+#ifdef _WIN32
+    blocking();
+#endif
 }
 
 TCP::TCP(const TCP &__o)
     : sock_fd(__o.sock_fd), addr_info(__o.addr_info), backlog(0)
 {
+#ifdef _WIN32
+    blocking();
+#endif
 }
 
 TCP &TCP::operator=(const TCP &__o)
